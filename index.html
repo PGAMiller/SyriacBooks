@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <!-- Give the page a title -->
+  <title>Peter's Map</title>
+  <!-- Add a link to the Leaflet CSS library so you can reference it for styling your map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+  <!-- For buttons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.css">
+  <!--for icon support-->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.14.0/css/all.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.14.0/css/v4-shims.css">
+  <!-- for icon markers -->
+  <link rel="stylesheet" href="css/leaflet.extra-markers.min.css">
+  <!-- for the marker clusters -->
+  <link rel="stylesheet" href="css/MarkerCluster.Default.css" />
+  <link rel="stylesheet" href="css/MarkerCluster.css" />
+  <!-- for grouped layer control -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-groupedlayercontrol/0.6.1/leaflet.groupedlayercontrol.min.css" integrity="sha512-yP7tTm3rX87fOK3iDh9K2RJTHsq6BfGZ8sFqRMIfsmmZVakOw483WyOKlRWVLjHCHEDIcEkp/U+cO3TnZ8oiuw=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <!-- Embed Playfair font from Google -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display&display=swap" rel="stylesheet">
+  <!-- All the CSS code goes inside the style tags below -->
+  <style>
+    /* style the body */
+    body {
+      margin: 0px;
+      height: 100%;
+      width: 100%;
+    }
+
+    /* style the map */
+    #map {
+      position: absolute;
+      width: 100%;
+      top: 0px;
+      bottom: 0;
+    }
+
+    /* Add banner to header background */
+    header {
+      /*background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Coffee_Beans_%282732722806%29.jpg/1024px-Coffee_Beans_%282732722806%29.jpg');*/
+      position: fixed;
+      left: 12px;
+      top: 12px;
+      width: 200px;
+      height: 60px;
+      background-color: rgba(255, 255, 255, 0.8);
+      box-shadow: 0px 0px 0px 2px rgba(0, 0, 0, 0.3);
+      border-radius: 3px;
+      z-index: 800;
+    }
+
+    /* Set and style fonts for text in map */
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      display: inline-block;
+      color: black;
+      margin-top: 0.10em;
+      margin-bottom: 0.0em;
+      margin-left: 0.5em;
+      margin-right: 0;
+      font-weight: normal;
+    }
+
+    h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 12px;
+      display: inline-block;
+      color: black;
+      margin-top: 0.0em;
+      margin-bottom: 0.0em;
+      margin-left: 0.0em;
+      margin-right: 0;
+      font-weight: normal;
+    }
+
+    h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 11px;
+      display: inline-block;
+      color: black;
+      margin-top: 0.0em;
+      margin-bottom: 0.0em;
+      margin-left: 1.0em;
+      margin-right: 0;
+      font-weight: normal;
+    }
+
+    a {
+      color: #f7f4ea;
+    }
+
+    /* the zoom control */
+    .leaflet-top {
+      bottom: 0;
+    }
+
+    .leaflet-top .leaflet-control-zoom {
+      top: 72px;
+    }
+
+    .leaflet-control-zoom a {
+      background-color: rgba(255, 255, 255, 0.8);
+    }
+
+    /* leaflet layers control plugin css */
+    .leaflet-control-layers-group-name {
+      font-weight: 700;
+      margin-bottom: .2em;
+      margin-left: 3px
+    }
+
+    .leaflet-control-layers-group {
+      margin-bottom: .5em
+    }
+
+    .leaflet-control-layers .leaflet-control-layers-group-label {
+      padding-left: 20px;
+      display: block
+    }
+
+    .leaflet-control-layers label {
+      padding-left: 40px;
+      padding-right: 10px;
+      display: none;
+    }
+
+    .leaflet-control-layers label.trigger {
+      position: absolute;
+      left: 0;
+      padding: 0;
+      margin: 0;
+      display: block;
+      cursor: pointer;
+    }
+
+    .leaflet-control-layers label.trigger:before {
+      content: "▶";
+      font-weight: normal;
+    }
+
+    .leaflet-control-layers .trigger-radio:checked~label.trigger:before {
+      content: "▼"
+    }
+
+    .leaflet-control-layers .trigger-radio {
+      display: none;
+    }
+
+    .leaflet-control-layers .trigger-radio:checked~label {
+      display: block;
+    }
+
+    /* layer control background color */
+    .leaflet-control-layers-expanded {
+      background-color: rgba(255, 255, 255, 0.8);
+    }
+
+    /* the slider and temporal legend */
+    #slider {
+      position: absolute;
+      height: 24px;
+      bottom: 15px;
+      left: 103px;
+      z-index: 1000;
+      background-color: rgba(255, 255, 255, 0.8);
+      border-radius: 3px;
+      box-shadow: 0px 0px 0px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    .temporal-legend {
+      background-color: rgba(255, 255, 255, 0.8);
+      position: absolute;
+      left: 2px;
+      height: 24px;
+      width: 89px;
+      bottom: 15px;
+      z-index: 1000;
+      border-radius: 3px;
+      box-shadow: 0px 0px 0px 2px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    #span {
+     line-height: normal;
+     position: relative;
+     top: -50%;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header content -->
+  <header>
+    <h1>Peter's Map</h1><br>
+    <h3>By Peter Miller</h3>
+  </header>
+  <!-- The map -->
+  <div id="map"></div>
+  <!-- ui slider -->
+  <div id='slider'>
+    <!-- Use the first and last year of the time data as the min and max. Set the initial value as the first year. Set the steps at one year. -->
+    <input type="range" min="5" max="18" value="5" step="1" class="slider" />
+  </div>
+  <!-- end slider -->
+  <!-- Add a link to the Leaflet JavaScript library so you can reference it for building your map -->
+  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+  <!-- Load Esri Leaflet from CDN -->
+  <script src="https://unpkg.com/esri-leaflet/dist/esri-leaflet.js"></script>
+  <!-- For buttons -->
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.js"></script>
+  <!--<script src="https://unpkg.com/esri-leaflet-vector@3/dist/esri-leaflet-vector.js"></script>-->
+  <!-- Add a link to the jQuery JavaScript library so you can leverage ajax methods to load your data -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <!-- for icon markers -->
+  <script src="js/leaflet.extra-markers.min.js"></script>
+  <!-- root script for the marker clusters -->
+  <script src="js/leaflet.markercluster-src.js"></script>
+  <!-- for the layer control marker clusters -->
+  <script src="js/leaflet.markercluster.layersupport.js"></script>
+  <!-- for grouped layer control -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-groupedlayercontrol/0.6.1/leaflet.groupedlayercontrol.min.js"></script>
+  <!-- All JavaScript goes inside the script tags below -->
+  <script>
+    const map = L.map('map', {
+      minZoom: 0,
+      maxZoom: 11
+    }).setView([34, 37], 6);
+
+    const vintageRelief = L.esri.tiledMapLayer({
+      url: 'https://tiles.arcgis.com/tiles/nGt4QxSblgDfeJn9/arcgis/rest/services/VintageShadedRelief/MapServer',
+      minZoom: 0,
+      maxZoom: 9
+      //maxZoom: 18
+    }).addTo(map);
+
+    const vintageReliefLabels = L.esri.basemapLayer('OceansLabels', {
+      minZoom: 0,
+      maxZoom: 11
+    }).addTo(map);
+
+    const Stamen_Terrain = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/terrain-background/{z}/{x}/{y}{r}.{ext}', {
+    	attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    	subdomains: 'abcd',
+    	minZoom: 10,
+    	maxZoom: 11,
+    	ext: 'png'
+    }).addTo(map);
+
+    // define the value in the slider when the map loads
+    let currentCentury = $('.slider').val();
+
+    // define the clustered layer support
+    var mcgLayerSupportGroup = L.markerClusterGroup.layerSupport(),
+      // empty clustered layers
+      bl12133 = L.layerGroup(),
+      bl12136 = L.layerGroup(),
+      bl12137 = L.layerGroup(),
+      bl12172 = L.layerGroup(),
+      bl12177 = L.layerGroup(),
+
+      bl14420 = L.layerGroup(),
+      bl14425 = L.layerGroup(),
+      bl14428 = L.layerGroup(),
+      bl14430 = L.layerGroup(),
+      bl14431 = L.layerGroup(),
+      bl14434 = L.layerGroup(),
+      bl14437 = L.layerGroup(),
+      bl14442 = L.layerGroup(),
+      bl14445 = L.layerGroup(),
+      bl14451 = L.layerGroup(),
+      bl14460 = L.layerGroup(),
+      bl14464 = L.layerGroup(),
+      bl14467 = L.layerGroup(),
+      bl14469 = L.layerGroup(),
+      bl14470 = L.layerGroup(),
+      bl14471 = L.layerGroup(),
+      bl14472 = L.layerGroup(),
+      bl14473 = L.layerGroup(),
+      bl14477 = L.layerGroup(),
+      bl14478 = L.layerGroup(),
+      bl14479 = L.layerGroup(),
+      bl14480 = L.layerGroup(),
+
+      bl17102 = L.layerGroup(),
+      bl17103 = L.layerGroup(),
+      bl17104 = L.layerGroup(),
+      bl17105 = L.layerGroup(),
+      bl17107 = L.layerGroup(),
+      bl17109 = L.layerGroup(),
+      bl17113 = L.layerGroup(),
+      bl17117 = L.layerGroup(),
+      bl17119 = L.layerGroup(),
+      bl17120 = L.layerGroup(),
+      bl17121 = L.layerGroup(),
+      bl17124 = L.layerGroup(),
+
+      bl17227 = L.layerGroup(),
+
+      bl17983 = L.layerGroup(),
+
+      egerton704 = L.layerGroup(),
+      // define the overlays
+      overlays = {
+        "<span class='controlHeading'>BL Add 12133 - 12177</span>": {
+          "BL Add 12133": bl12133,
+          "BL Add 12136": bl12136,
+          "BL Add 12137": bl12137,
+          "BL Add 12172": bl12172,
+          "BL Add 12177": bl12177,
+        },
+        "<span class='controlHeading'>BL Add 14420 - 14480</span>": {
+          "BL Add 14420": bl14420,
+          "BL Add 14425": bl14425,
+          "BL Add 14428": bl14428,
+          "BL Add 14430": bl14430,
+          "BL Add 14431": bl14431,
+          "BL Add 14434": bl14434,
+          "BL Add 14437": bl14437,
+          "BL Add 14442": bl14442,
+          "BL Add 14445": bl14445,
+          "BL Add 14451": bl14451,
+          "BL Add 14460": bl14460,
+          "BL Add 14464": bl14464,
+          "BL Add 14467": bl14467,
+          "BL Add 14469": bl14469,
+          "BL Add 14470": bl14470,
+          "BL Add 14471": bl14471,
+          "BL Add 14472": bl14472,
+          "BL Add 14473": bl14473,
+          "BL Add 14477": bl14477,
+          "BL Add 14478": bl14478,
+          "BL Add 14479": bl14479,
+          "BL Add 14480": bl14480,
+        },
+        "<span class='controlHeading'>BL Add 17102 - 17983</span>": {
+          "BL Add 17102": bl17102,
+          "BL Add 17103": bl17103,
+          "BL Add 17104": bl17104,
+          "BL Add 17105": bl17105,
+          "BL Add 17107": bl17107,
+          "BL Add 17109": bl17109,
+          "BL Add 17113": bl17113,
+          "BL Add 17117": bl17117,
+          "BL Add 17119": bl17119,
+          "BL Add 17120": bl17120,
+          "BL Add 17121": bl17121,
+          "BL Add 17124": bl17124,
+          "BL Add 17227": bl17227,
+          "BL Add 17983": bl17983,
+        },
+        "<span class='controlHeading'>Egerton</span>": {
+          "Egerton 704": egerton704,
+        },
+      },
+      // define the layer control and add the overlays
+      control = L.control.groupedLayers(null, overlays, {
+        groupCheckboxes: true,
+        collapsed: false,
+      }),
+      i, a, title, marker;
+
+    // add the clustered layer support to the map
+    mcgLayerSupportGroup.addTo(map);
+    // check in the layer groups you want to cluster
+    mcgLayerSupportGroup.addLayer([bl12133, bl12136, bl12137, bl12172, bl12177,
+      bl14420, bl14425, bl14428, bl14430, bl14431, bl14434, bl14437, bl14442,
+      bl14445, bl14451, bl14460, bl14464, bl14467, bl14469, bl14470, bl14471,
+      bl14472, bl14473, bl14477, bl14478, bl14479, bl14480, bl17102, bl17103,
+      bl17104, bl17105, bl17107, bl17109, bl17113, bl17117, bl17119, bl17120,
+      bl17121, bl17124, bl17227, bl17983, egerton704
+    ]);
+    //mcgLayerSupportGroup.checkIn([episcopalLayer, otherPWLayer, eventLayer, peopleLayer, townLayer, railLayer, otherLayer, allPoints]);
+
+    // add the cluster layer control to the map
+    control.addTo(map);
+
+    $('.leaflet-control-layers-group-label').each(function(index) {
+      var self = $(this),
+        trigger = $('<label>', {
+          class: 'trigger',
+          for: 'dropdown-trigger-' + index
+        }).insertBefore(self),
+        radio = $('<input>', {
+          type: 'checkbox',
+          class: 'trigger-radio',
+          name: 'dropdown-control',
+          id: 'dropdown-trigger-' + index
+        }).insertBefore(trigger);
+    });
+/*
+    // Zoom to fit layers on the map upon adding or removing layers
+    map.on('layeradd layerremove', function() {
+      // Create new empty bounds
+      var bounds = new L.LatLngBounds();
+      // Iterate the map's layers
+      map.eachLayer(function(layer) {
+        // Check if layer is a featuregroup
+        if (layer instanceof L.FeatureGroup) {
+          // Extend bounds with group's bounds
+          bounds.extend(layer.getBounds());
+        }
+      });
+      // Check if bounds are valid (could be empty)
+      if (bounds.isValid()) {
+        // Valid, fit bounds
+        map.fitBounds(bounds);
+      } else {
+        // Invalid, fit world
+        map.fitWorld();
+      }
+    });
+*/
+    // Add a zoom to fit visible layers button
+    var zoom2Fit = L.easyButton({
+        id: 'zoom2Fit',
+        position: 'topright',
+        states: [{
+          stateName: 'change-zoom',
+          icon: 'fas fa-expand-alt',
+          title: 'Zoom map to fit visible markers',
+          onClick: function(e) {
+            // Create new empty bounds
+            var bounds = new L.LatLngBounds();
+            // Iterate the map's layers
+            map.eachLayer(function(layer) {
+              // Check if layer is a featuregroup
+              if (layer instanceof L.FeatureGroup) {
+                // Extend bounds with group's bounds
+                bounds.extend(layer.getBounds());
+              }
+            });
+            // Check if bounds are valid (could be empty)
+            if (bounds.isValid()) {
+              // Valid, fit bounds
+              map.fitBounds(bounds);
+            } else {
+              // Invalid, fit world
+              map.fitWorld();
+            }
+          }
+        }]
+      }).addTo(map);
+
+      zoom2Fit.button.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+
+    // use jquery to load GeoJSON data
+    $.when(
+      $.getJSON('data/Syriac-Manuscripts-Data.geojson'), // replace
+      // when the files are done loading,
+      // identify them with names and process them through a function
+    ).done(function(manuscriptPoints) {
+
+      // initiate a leaflet GeoJSON layer with L.geoJson, feed it the data, and add to the map
+      const manPts = L.geoJson(manuscriptPoints, {
+        // point to layer
+        pointToLayer: function(feature, latlng) {
+          // return a marker
+          return L.marker(latlng, {
+            // add an extra marker with a font awesome book icon
+            icon: L.ExtraMarkers.icon({
+              icon: 'fa-book',
+              markerColor: 'blue-dark',
+              shape: 'star',
+              prefix: 'fas'
+            })
+          });
+        },
+        // for each feature...
+        onEachFeature: function(feature, layer) {
+          // define the feature properties
+          let prop = layer.feature.properties;
+          // define popup content
+          let popUp = ('<h2>Shelfmark: ' + prop.Shelfmark + '<br>' +
+            'Wright Number: ' + prop.Wright_Number + '<br>' +
+            'Produced: ' + prop.CenturyS + "th Century - " + prop.CenturyF + "th Century" + '<br>' +
+            'Place Name: ' + prop.Place_Name + '<br>' +
+            'Place Type: ' + prop.Place_Type + '<br>' +
+            'Modern Place: ' + prop.Modern_Place + '</h2>');
+          // bind the popup to the layer features
+          layer.bindPopup(popUp);
+          // add manuscripts to empty clustered layers defined above
+          if (prop.Shelfmark == 'Egerton 704' && prop.CenturyS <= currentCentury) {
+            egerton704.addLayer(layer);
+          }
+          if (prop.Shelfmark == 'BL Add 14425' && prop.CenturyS <= currentCentury) {
+            bl14425.addLayer(layer);
+          }
+          if (prop.Shelfmark == 'BL Add 12172' && prop.CenturyS <= currentCentury) {
+            bl12172.addLayer(layer);
+          }
+          if (prop.Shelfmark == 'BL Add 12133' && prop.CenturyS <= currentCentury) {
+            bl12133.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 14428' && prop.CenturyS <= currentCentury) {
+            bl14428.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 17102' && prop.CenturyS <= currentCentury) {
+            bl17102.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 17104' && prop.CenturyS <= currentCentury) {
+            bl17104.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 17105' && prop.CenturyS <= currentCentury) {
+            bl17105.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 14431' && prop.CenturyS <= currentCentury) {
+            bl14431.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 14442' && prop.CenturyS <= currentCentury) {
+            bl14442.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 14430' && prop.CenturyS <= currentCentury) {
+            bl14430.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 17109' && prop.CenturyS <= currentCentury) {
+            bl17109.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 17107' && prop.CenturyS <= currentCentury) {
+            bl17107.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 12136' && prop.CenturyS <= currentCentury) {
+            bl12136.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 14445' && prop.CenturyS <= currentCentury) {
+            bl14445.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 17103' && prop.CenturyS <= currentCentury) {
+            bl17103.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 14437' && prop.CenturyS <= currentCentury) {
+            bl14437.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 14434' && prop.CenturyS <= currentCentury) {
+            bl14434.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 14420' && prop.CenturyS <= currentCentury) {
+            bl14420.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 14470' && prop.CenturyS <= currentCentury) {
+            bl14470.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 17124' && prop.CenturyS <= currentCentury) {
+            bl17124.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 17113' && prop.CenturyS <= currentCentury) {
+            bl17113.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 12137' && prop.CenturyS <= currentCentury) {
+            bl12137.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 14460' && prop.CenturyS <= currentCentury) {
+            bl14460.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 14471' && prop.CenturyS <= currentCentury) {
+            bl14471.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 12177' && prop.CenturyS <= currentCentury) {
+            bl12177.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 17983' && prop.CenturyS <= currentCentury) {
+            bl17983.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 17117' && prop.CenturyS <= currentCentury) {
+            bl17117.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 14467' && prop.CenturyS <= currentCentury) {
+            bl14467.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 14464' && prop.CenturyS <= currentCentury) {
+            bl14464.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 17119' && prop.CenturyS <= currentCentury) {
+            bl17119.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 14451' && prop.CenturyS <= currentCentury) {
+            bl14451.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 14469' && prop.CenturyS <= currentCentury) {
+            bl14469.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 17120' && prop.CenturyS <= currentCentury) {
+            bl17120.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 17121' && prop.CenturyS <= currentCentury) {
+            bl17121.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 14472' && prop.CenturyS <= currentCentury) {
+            bl14472.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 14473' && prop.CenturyS <= currentCentury) {
+            bl14473.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 14480' && prop.CenturyS <= currentCentury) {
+            bl14480.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 14479' && prop.CenturyS <= currentCentury) {
+            bl14479.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 14477' && prop.CenturyS <= currentCentury) {
+            bl14477.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 14478' && prop.CenturyS <= currentCentury) {
+            bl14478.addLayer(layer)
+          }
+          if (prop.Shelfmark == 'BL Add 17227' && prop.CenturyS <= currentCentury) {
+            bl17227.addLayer(layer)
+          };
+        }
+      });
+
+      // call functions defined below
+      sequenceUI(currentCentury, manPts);
+      createTemporalLegend(currentCentury);
+
+    });
+
+    // add a UI slider
+    function sequenceUI(currentCentury, manPts) {
+
+      // create Leaflet control for the slider
+      const sliderControl = L.control({
+        position: 'bottomleft',
+        follow: true
+      });
+
+      // add controls to the slider
+      sliderControl.onAdd = function(map) {
+
+        const controls = L.DomUtil.get("slider");
+
+        L.DomEvent.disableScrollPropagation(controls);
+        L.DomEvent.disableClickPropagation(controls);
+
+        return controls;
+
+      }
+
+      // add the control to the map
+      sliderControl.addTo(map);
+
+      // use the jQuery ajax method to get the slider element
+      $('.slider')
+        .on('input change', function() { // when the input changes...
+          $(".temporal-legend").html("<h2><span id='span'>" + this.value + "th Century</span></h2>");
+          let currentCentury = $(this).val(); // identify the year selected with "currentYear"
+          manPts.eachLayer(function(layer) {
+            const prop = layer.feature.properties;
+            // add manuscripts to empty clustered layers defined above
+            if (prop.Shelfmark == 'Egerton 704' && prop.CenturyS <= currentCentury) {
+              egerton704.addLayer(layer);
+            } if (prop.Shelfmark == 'Egerton 704' && prop.CenturyS > currentCentury) {
+              egerton704.removeLayer(layer);
+            }
+            if (prop.Shelfmark == 'BL Add 14425' && prop.CenturyS <= currentCentury) {
+              bl14425.addLayer(layer);
+            } if (prop.Shelfmark == 'BL Add 14425' && prop.CenturyS > currentCentury) {
+              bl14425.removeLayer(layer);
+            }
+            if (prop.Shelfmark == 'BL Add 12172' && prop.CenturyS <= currentCentury) {
+              bl12172.addLayer(layer);
+            } if (prop.Shelfmark == 'BL Add 12172' && prop.CenturyS > currentCentury) {
+              bl12172.removeLayer(layer);
+            }
+            if (prop.Shelfmark == 'BL Add 12133' && prop.CenturyS <= currentCentury) {
+              bl12133.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 12133' && prop.CenturyS > currentCentury) {
+              bl12133.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 14428' && prop.CenturyS <= currentCentury) {
+              bl14428.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 14428' && prop.CenturyS > currentCentury) {
+              bl14428.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 17102' && prop.CenturyS <= currentCentury) {
+              bl17102.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 17102' && prop.CenturyS > currentCentury) {
+              bl17102.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 17104' && prop.CenturyS <= currentCentury) {
+              bl17104.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 17104' && prop.CenturyS > currentCentury) {
+              bl17104.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 17105' && prop.CenturyS <= currentCentury) {
+              bl17105.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 17105' && prop.CenturyS > currentCentury) {
+              bl17105.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 14431' && prop.CenturyS <= currentCentury) {
+              bl14431.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 14431' && prop.CenturyS > currentCentury) {
+              bl14431.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 14442' && prop.CenturyS <= currentCentury) {
+              bl14442.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 14442' && prop.CenturyS > currentCentury) {
+              bl14442.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 14430' && prop.CenturyS <= currentCentury) {
+              bl14430.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 14430' && prop.CenturyS > currentCentury) {
+              bl14430.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 17109' && prop.CenturyS <= currentCentury) {
+              bl17109.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 17109' && prop.CenturyS > currentCentury) {
+              bl17109.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 17107' && prop.CenturyS <= currentCentury) {
+              bl17107.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 17107' && prop.CenturyS > currentCentury) {
+              bl17107.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 12136' && prop.CenturyS <= currentCentury) {
+              bl12136.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 12136' && prop.CenturyS > currentCentury) {
+              bl12136.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 14445' && prop.CenturyS <= currentCentury) {
+              bl14445.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 14445' && prop.CenturyS > currentCentury) {
+              bl14445.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 17103' && prop.CenturyS <= currentCentury) {
+              bl17103.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 17103' && prop.CenturyS > currentCentury) {
+              bl17103.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 14437' && prop.CenturyS <= currentCentury) {
+              bl14437.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 14437' && prop.CenturyS > currentCentury) {
+              bl14437.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 14434' && prop.CenturyS <= currentCentury) {
+              bl14434.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 14434' && prop.CenturyS > currentCentury) {
+              bl14434.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 14420' && prop.CenturyS <= currentCentury) {
+              bl14420.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 14420' && prop.CenturyS > currentCentury) {
+              bl14420.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 14470' && prop.CenturyS <= currentCentury) {
+              bl14470.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 14470' && prop.CenturyS > currentCentury) {
+              bl14470.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 17124' && prop.CenturyS <= currentCentury) {
+              bl17124.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 17124' && prop.CenturyS > currentCentury) {
+              bl17124.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 17113' && prop.CenturyS <= currentCentury) {
+              bl17113.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 17113' && prop.CenturyS > currentCentury) {
+              bl17113.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 12137' && prop.CenturyS <= currentCentury) {
+              bl12137.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 12137' && prop.CenturyS > currentCentury) {
+              bl12137.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 14460' && prop.CenturyS <= currentCentury) {
+              bl14460.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 14460' && prop.CenturyS > currentCentury) {
+              bl14460.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 14471' && prop.CenturyS <= currentCentury) {
+              bl14471.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 14471' && prop.CenturyS > currentCentury) {
+              bl14471.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 12177' && prop.CenturyS <= currentCentury) {
+              bl12177.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 12177' && prop.CenturyS > currentCentury) {
+              bl12177.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 17983' && prop.CenturyS <= currentCentury) {
+              bl17983.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 17983' && prop.CenturyS > currentCentury) {
+              bl17983.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 17117' && prop.CenturyS <= currentCentury) {
+              bl17117.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 17117' && prop.CenturyS > currentCentury) {
+              bl17117.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 14467' && prop.CenturyS <= currentCentury) {
+              bl14467.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 14467' && prop.CenturyS > currentCentury) {
+              bl14467.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 14464' && prop.CenturyS <= currentCentury) {
+              bl14464.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 14464' && prop.CenturyS > currentCentury) {
+              bl14464.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 17119' && prop.CenturyS <= currentCentury) {
+              bl17119.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 17119' && prop.CenturyS > currentCentury) {
+              bl17119.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 14451' && prop.CenturyS <= currentCentury) {
+              bl14451.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 14451' && prop.CenturyS > currentCentury) {
+              bl14451.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 14469' && prop.CenturyS <= currentCentury) {
+              bl14469.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 14469' && prop.CenturyS > currentCentury) {
+              bl14469.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 17120' && prop.CenturyS <= currentCentury) {
+              bl17120.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 17120' && prop.CenturyS > currentCentury) {
+              bl17120.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 17121' && prop.CenturyS <= currentCentury) {
+              bl17121.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 17121' && prop.CenturyS > currentCentury) {
+              bl17121.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 14472' && prop.CenturyS <= currentCentury) {
+              bl14472.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 14472' && prop.CenturyS > currentCentury) {
+              bl14472.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 14473' && prop.CenturyS <= currentCentury) {
+              bl14473.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 14473' && prop.CenturyS > currentCentury) {
+              bl14473.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 14480' && prop.CenturyS <= currentCentury) {
+              bl14480.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 14480' && prop.CenturyS > currentCentury) {
+              bl14480.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 14479' && prop.CenturyS <= currentCentury) {
+              bl14479.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 14479' && prop.CenturyS > currentCentury) {
+              bl14479.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 14477' && prop.CenturyS <= currentCentury) {
+              bl14477.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 14477' && prop.CenturyS > currentCentury) {
+              bl14477.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 14478' && prop.CenturyS <= currentCentury) {
+              bl14478.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 14478' && prop.CenturyS > currentCentury) {
+              bl14478.removeLayer(layer)
+            }
+            if (prop.Shelfmark == 'BL Add 17227' && prop.CenturyS <= currentCentury) {
+              bl17227.addLayer(layer)
+            } if (prop.Shelfmark == 'BL Add 17227' && prop.CenturyS > currentCentury) {
+              bl17227.removeLayer(layer)
+            };
+          });
+        });
+
+    }; // end sequenceUI function
+
+    // add a temporal legend in sync with the UI slider
+    function createTemporalLegend(currentCentury) {
+
+      const temporalLegend = L.control({
+        position: 'bottomleft' // place the temporal legend at bottom left corner
+      });
+
+      temporalLegend.onAdd = function(map) {
+        var output = L.DomUtil.create("div", "temporal-legend");
+        $(output).html("<h2><span id='span'>" + currentCentury + "th Century</span></h2>"); // set grade value to the year selected on map load
+        return output;
+      }
+
+      temporalLegend.addTo(map);
+
+    }; // end createTemporalLegend function
+  </script>
+</body>
+
+</html>
